@@ -336,10 +336,6 @@ const initExplorer = async (assetId, assetTypeId, isBundle) => {
 }
 
 const initDownloadButton = async (assetId, assetTypeId) => {
-	if (!SETTINGS.get("itemdetails.downloadButton") || InvalidDownloadableAssetTypeIds.includes(assetTypeId)) {
-		return;
-	}
-
 	const assetUrl = await getCurrentValidAssetUrl(assetId, assetTypeId);
 	if (!assetUrl) {
 		return;
@@ -418,6 +414,7 @@ const initDownloadButton = async (assetId, assetTypeId) => {
 
 	return btnCont;
 };
+
 
 
 	const btn = btnCont.$find("a")
