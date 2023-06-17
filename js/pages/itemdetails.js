@@ -336,82 +336,89 @@ const initExplorer = async (assetId, assetTypeId, isBundle) => {
 }
 
 const initDownloadButton = async (assetId, assetTypeId) => {
-	if(!SETTINGS.get("itemdetails.downloadButton") || InvalidDownloadableAssetTypeIds.includes(assetTypeId)) {
-		return
+	if (!SETTINGS.get("itemdetails.downloadButton") || InvalidDownloadableAssetTypeIds.includes(assetTypeId)) {
+		return;
 	}
 
-	const assetUrl = await getCurrentValidAssetUrl(assetId, assetTypeId)
-	if(!assetUrl) {
-		return
+	const assetUrl = await getCurrentValidAssetUrl(assetId, assetTypeId);
+	if (!assetUrl) {
+		return;
 	}
-	
-	const btnCont = html`
-	<div class=btr-download-button-container>
-		<a class=btr-download-button>
-			<span class=btr-icon-download></span>
+
+	const btnCont = document.createElement("div");
+	btnCont.className = "btr-download-button-container";
+	btnCont.innerHTML = `
+		<a class="btr-download-button">
+			<span class="btr-icon-download"></span>
 		</a>
-	</div>`
+	`;
 
-	const download = (data, fileType) => {
-		const title = $("#item-container .item-name-container h2")
-		const fileName = `${title && formatUrlName(title.textContent, "") || assetId.toString()}.${fileType || getAssetFileType(assetTypeId, data)}`
-
-		const blobUrl = URL.createObjectURL(new Blob([data], { type: "binary/octet-stream" }))
-		startDownload(blobUrl, fileName)
-		URL.revokeObjectURL(blobUrl)
-	}
+	const download = (data, fileType, fileName) => {
+		const blobUrl = URL.createObjectURL(new Blob([data], { type: "binary/octet-stream" }));
+		startDownload(blobUrl, fileName);
+		URL.revokeObjectURL(blobUrl);
+	};
 
 	const doNamedDownload = event => {
-		const self = event.currentTarget
-		event.preventDefault()
+		event.preventDefault();
 
-		if(assetTypeId === 4 && self.classList.contains("btr-download-obj")) {
+		const title = document.querySelector("#item-container .item-name-container h2");
+		const fileName = `${title && formatUrlName(title.textContent, "") || assetId.toString()}.${getAssetFileType(assetTypeId)}`;
+
+		if (assetTypeId === 4 && event.currentTarget.classList.contains("btr-download-obj")) {
 			AssetCache.loadMesh(assetUrl, mesh => {
-				const lines = []
+				const lines = [];
 
-				lines.push("o Mesh")
+				lines.push("o Mesh");
 
-				for(let i = 0, len = mesh.vertices.length; i < len; i += 3) {
-					lines.push(`v ${mesh.vertices[i]} ${mesh.vertices[i + 1]} ${mesh.vertices[i + 2]}`)
+				for (let i = 0, len = mesh.vertices.length; i < len; i += 3) {
+					lines.push(`v ${mesh.vertices[i]} ${mesh.vertices[i + 1]} ${mesh.vertices[i + 2]}`);
 				}
 
-				lines.push("")
+				lines.push("");
 
-				for(let i = 0, len = mesh.normals.length; i < len; i += 3) {
-					lines.push(`vn ${mesh.normals[i]} ${mesh.normals[i + 1]} ${mesh.normals[i + 2]}`)
+				for (let i = 0, len = mesh.normals.length; i < len; i += 3) {
+					lines.push(`vn ${mesh.normals[i]} ${mesh.normals[i + 1]} ${mesh.normals[i + 2]}`);
 				}
 
-				lines.push("")
+				lines.push("");
 
-				for(let i = 0, len = mesh.uvs.length; i < len; i += 2) {
-					lines.push(`vt ${mesh.uvs[i]} ${mesh.uvs[i + 1]}`)
+				for (let i = 0, len = mesh.uvs.length; i < len; i += 2) {
+					lines.push(`vt ${mesh.uvs[i]} ${mesh.uvs[i + 1]}`);
 				}
 
-				lines.push("")
-				
-				// only use the first lod
-				const faces = mesh.faces.subarray(mesh.lods[0] * 3, mesh.lods[1] * 3)
-				
-				for(let i = 0, len = faces.length; i < len; i += 3) {
-					const a = faces[i] + 1
-					const b = faces[i + 1] + 1
-					const c = faces[i + 2] + 1
-					lines.push(`f ${a}/${a}/${a} ${b}/${b}/${b} ${c}/${c}/${c}`)
+				lines.push("");
+
+				// Only use the first lod
+				const faces = mesh.faces.subarray(mesh.lods[0] * 3, mesh.lods[1] * 3);
+
+				for (let i = 0, len = faces.length; i < len; i += 3) {
+					const a = faces[i] + 1;
+					const b = faces[i + 1] + 1;
+					const c = faces[i + 2] + 1;
+					lines.push(`f ${a}/${a}/${a} ${b}/${b}/${b} ${c}/${c}/${c}`);
 				}
 
-				download(lines.join("\n"), "obj")
-			})
+				download(lines.join("\n"), "obj");
+			});
 		} else {
 			AssetCache.loadBuffer(assetUrl, buffer => {
-				if(!buffer) {
-					alert("Failed to download")
-					return
+				if (!buffer) {
+					alert("Failed to download");
+					return;
 				}
 
-				download(buffer)
-			})
+				download(buffer, null, fileName);
+			});
 		}
-	}
+	};
+
+	const btn = btnCont.querySelector("a");
+	btn.addEventListener("click", doNamedDownload);
+
+	return btnCont;
+};
+
 
 	const btn = btnCont.$find("a")
 	if(assetTypeId === 4) {
